@@ -12,6 +12,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Polls from "./pages/Polls";
 import PollDetail from "./pages/PollDetail";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -39,6 +42,9 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/polls" element={<Polls />} />
             <Route path="/polls/:pollId" element={<PollDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
