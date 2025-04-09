@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -24,7 +25,9 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  DocumentSnapshot,
+  DocumentData
 } from "firebase/firestore";
 import { 
   getStorage, 
@@ -93,9 +96,12 @@ export const logoutUser = async () => {
 // User functions
 export const getUserRole = async (userId: string): Promise<UserRole> => {
   try {
-    const userDoc = await getDoc(db, "users", userId);
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+    
     if (userDoc.exists()) {
-      return userDoc.data().role as UserRole;
+      const userData = userDoc.data();
+      return userData.role as UserRole;
     }
     return { isAdmin: false, isVoter: true };
   } catch (error) {
