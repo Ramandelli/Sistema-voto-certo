@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -82,7 +81,12 @@ export const loginWithEmail = async (email: string, password: string) => {
 };
 
 export const loginWithGoogle = async () => {
-  return signInWithPopup(auth, googleProvider);
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error: any) {
+    console.error("Google login error:", error);
+    throw error;
+  }
 };
 
 export const loginAnonymously = async () => {

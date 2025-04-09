@@ -69,11 +69,21 @@ const RegisterForm = () => {
       navigate('/');
     } catch (error: any) {
       console.error(error);
-      toast({
-        title: "Erro ao cadastrar com Google",
-        description: error.message,
-        variant: "destructive"
-      });
+      
+      // Mensagem de erro personalizada para o erro de domínio não autorizado
+      if (error.code === 'auth/unauthorized-domain') {
+        toast({
+          title: "Erro de configuração",
+          description: "O domínio atual não está autorizado no Firebase. Adicione este domínio na configuração do Firebase Authentication.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro ao cadastrar com Google",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
