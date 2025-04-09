@@ -72,9 +72,10 @@ const RegisterForm = () => {
       
       // Mensagem de erro personalizada para o erro de domínio não autorizado
       if (error.code === 'auth/unauthorized-domain') {
+        const currentDomain = window.location.hostname;
         toast({
           title: "Erro de configuração",
-          description: "O domínio atual não está autorizado no Firebase. Adicione este domínio na configuração do Firebase Authentication.",
+          description: `O domínio atual "${currentDomain}" não está autorizado no Firebase. Adicione este domínio na configuração do Firebase Authentication.`,
           variant: "destructive"
         });
       } else {
