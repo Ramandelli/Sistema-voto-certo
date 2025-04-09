@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -94,7 +93,7 @@ export const logoutUser = async () => {
 // User functions
 export const getUserRole = async (userId: string): Promise<UserRole> => {
   try {
-    const userDoc = await getDoc(doc(db, "users", userId));
+    const userDoc = await getDoc(db, "users", userId);
     if (userDoc.exists()) {
       return userDoc.data().role as UserRole;
     }
