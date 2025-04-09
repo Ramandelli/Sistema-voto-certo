@@ -12,11 +12,14 @@ const CreateEditPoll = () => {
   const { pollId } = useParams<{ pollId: string }>();
   const navigate = useNavigate();
   const [poll, setPoll] = useState<Poll | null>(null);
-  const [loading, setLoading] = useState(pollId ? true : false);
+  const [loading, setLoading] = useState(pollId !== 'new');
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    if (pollId === 'new') return;
+    if (pollId === 'new') {
+      setLoading(false);
+      return;
+    }
     
     if (pollId) {
       const fetchPoll = async () => {

@@ -40,7 +40,7 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
         title: existingPoll.title,
         description: existingPoll.description,
         status: existingPoll.status,
-        candidates: existingPoll.candidates,
+        candidates: existingPoll.candidates || [],
         startDate: existingPoll.startDate,
         endDate: existingPoll.endDate
       });
@@ -111,7 +111,7 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
         await createPoll({
           ...pollData as Omit<Poll, 'id' | 'createdAt'>,
           createdBy: currentUser.uid,
-          candidates: []
+          candidates: pollData.candidates || []
         });
         toast({
           title: "Sucesso",
