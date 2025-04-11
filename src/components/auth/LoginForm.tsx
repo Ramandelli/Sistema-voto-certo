@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   loginWithEmail, 
-  loginWithGoogle, 
-  loginAnonymously 
+  loginWithGoogle 
 } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,27 +77,6 @@ const LoginForm = () => {
           variant: "destructive"
         });
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAnonymousLogin = async () => {
-    setIsLoading(true);
-    try {
-      await loginAnonymously();
-      toast({
-        title: "Login anônimo realizado",
-        description: "Você está navegando como usuário anônimo.",
-      });
-      navigate('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        title: "Erro ao fazer login anônimo",
-        description: error.message,
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }
@@ -193,15 +171,7 @@ const LoginForm = () => {
             </svg>
             Google
           </Button>
-          <Button 
-            variant="outline" 
-            type="button" 
-            onClick={handleAnonymousLogin}
-            disabled={isLoading}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Acesso Anônimo
-          </Button>
+
         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-4">
