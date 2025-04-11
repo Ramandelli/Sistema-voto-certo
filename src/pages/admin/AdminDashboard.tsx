@@ -58,16 +58,9 @@ const AdminDashboard = () => {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Dashboard Administrativo</h1>
-          <div className="flex justify-between items-center mb-2">
             <p className="text-muted-foreground">
                Bem-vindo ao painel de controle do sistema de pesquisas eleitorais.
             </p>
-            <Button variant="outline" asChild>
-              <Link to="/">
-                ← Voltar para a Home
-              </Link>
-            </Button>
-          </div>
         </div>
         
         {/* Stats Cards */}
