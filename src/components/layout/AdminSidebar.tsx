@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -8,7 +7,8 @@ import {
   Settings, 
   HelpCircle,
   LayoutDashboard,
-  Vote
+  Vote,
+  Home // 1. Importe o ícone Home
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -48,6 +48,12 @@ const AdminSidebar = () => {
         <NavLink to="/admin/settings" className={navLinkClass}>
           <Settings className="h-5 w-5" />
           Configurações
+        </NavLink>
+
+        {/* 2. Novo botão Voltar */}
+        <NavLink to="/" className={navLinkClass}>
+          <Home className="h-5 w-5" />
+          Voltar
         </NavLink>
       </nav>
       
