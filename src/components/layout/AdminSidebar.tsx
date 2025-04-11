@@ -8,7 +8,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   Vote,
-  Home // 1. Importe o ícone Home
+  Home
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -49,15 +49,14 @@ const AdminSidebar = () => {
           <Settings className="h-5 w-5" />
           Configurações
         </NavLink>
+      </nav>
 
-        {/* 2. Novo botão Voltar */}
+      {/* Seção inferior fixa */}
+      <div className="mt-auto pt-6 border-t border-sidebar-border space-y-1">
         <NavLink to="/" className={navLinkClass}>
           <Home className="h-5 w-5" />
           Voltar
         </NavLink>
-      </nav>
-      
-      <div className="mt-auto pt-6 border-t border-sidebar-border">
         <NavLink to="/admin/help" className={navLinkClass}>
           <HelpCircle className="h-5 w-5" />
           Ajuda
