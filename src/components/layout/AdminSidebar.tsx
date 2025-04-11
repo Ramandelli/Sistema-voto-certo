@@ -9,7 +9,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   Vote,
-  ArrowLeft
+  ArrowLeftFromLine 
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -50,9 +50,8 @@ const AdminSidebar = () => {
           <Settings className="h-5 w-5" />
           Configurações
         </NavLink>
-        <hr className="my-2 border-t border-gray-300" />
         <NavLink to="/" className={navLinkClass}>
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeftFromLine  className="h-5 w-5" />
           Voltar para Home
         </NavLink>
       </nav>
