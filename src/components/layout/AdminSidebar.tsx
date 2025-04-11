@@ -50,7 +50,8 @@ const AdminSidebar = () => {
           <Settings className="h-5 w-5" />
           Configurações
         </NavLink>
-        <NavLink to="/" className={navLinkClass + " border border-red-500"}>
+        <hr className="my-2 border-t border-gray-300" />
+        <NavLink to="/" className={navLinkClass}>
           <ArrowLeft className="h-5 w-5" />
           Voltar para Home
         </NavLink>
