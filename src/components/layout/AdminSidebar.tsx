@@ -20,7 +20,8 @@ const AdminSidebar = () => {
     }`;
 
   return (
-    <div className="h-screen overflow-y-auto bg-sidebar w-64 py-6 px-3 flex flex-col">
+    <div className="h-screen bg-sidebar w-64 py-6 px-3 flex flex-col">
+      {/* Cabeçalho */}
       <div className="px-4 mb-8">
         <h2 className="text-xl font-bold text-sidebar-foreground flex items-center">
           <BarChart2 className="mr-2 h-6 w-6" />
@@ -28,7 +29,8 @@ const AdminSidebar = () => {
         </h2>
       </div>
       
-      <nav className="space-y-1 flex-grow">
+      {/* Lista principal com scroll */}
+      <nav className="flex-grow overflow-y-auto space-y-1">
         <NavLink to="/admin" end className={navLinkClass}>
           <LayoutDashboard className="h-5 w-5" />
           Dashboard
@@ -51,13 +53,13 @@ const AdminSidebar = () => {
         </NavLink>
       </nav>
 
-      {/* Seção inferior fixa */}
-      <div className="mt-auto pt-6 border-t border-sidebar-border space-y-1">
+      {/* Seção inferior fixa (sem scroll) */}
+      <div className="mt-auto pt-6 border-t border-sidebar-border">
         <NavLink to="/" className={navLinkClass}>
           <Home className="h-5 w-5" />
-          Voltar
+          Voltar para Home
         </NavLink>
-        <NavLink to="/admin/help" className={navLinkClass}>
+        <NavLink to="/admin/help" className={`${navLinkClass} mt-1`}>
           <HelpCircle className="h-5 w-5" />
           Ajuda
         </NavLink>
