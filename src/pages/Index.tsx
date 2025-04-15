@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BarChart2, CheckCircle, Users } from 'lucide-react';
 import PollCard from '@/components/polls/PollCard';
 import MainLayout from '@/components/layout/MainLayout';
-import { Poll, getActivePoll } from '@/lib/firebase';
+import { Poll, getAllPolls } from '@/lib/firebase';
 
 const Index = () => {
   const [activePolls, setActivePolls] = useState<Poll[]>([]);
@@ -14,8 +13,11 @@ const Index = () => {
   useEffect(() => {
     const fetchActivePolls = async () => {
       try {
-        const polls = await getActivePoll();
-        setActivePolls(polls);
+        // Carrega todas as pesquisas
+        const polls = await getAllPolls();
+        // Filtra apenas as pesquisas com status "active"
+        const actives = polls.filter(poll => poll.status === 'active');
+        setActivePolls(actives);
       } catch (error) {
         console.error("Error fetching active polls:", error);
       } finally {
