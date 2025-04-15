@@ -11,21 +11,20 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const fetchActivePolls = async () => {
+    const fetchPolls = async () => {
       try {
-        // Carrega todas as pesquisas
-        const polls = await getAllPolls();
-        // Filtra apenas as pesquisas com status "active"
-        const actives = polls.filter(poll => poll.status === 'active');
+        // Busca todas as pesquisas e filtra apenas as ativas
+        const fetchedPolls = await getAllPolls();
+        const actives = fetchedPolls.filter(poll => poll.status === 'active');
         setActivePolls(actives);
       } catch (error) {
-        console.error("Error fetching active polls:", error);
+        console.error("Error fetching polls:", error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchActivePolls();
+    fetchPolls();
   }, []);
 
   return (
