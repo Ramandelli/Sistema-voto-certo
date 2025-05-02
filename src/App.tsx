@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/admin/candidates" element={<ManageCandidates />} />
             <Route path="/admin/candidates/:candidateId" element={<CreateEditCandidate />} />
             <Route path="/admin/votes" element={<ManageVotes />} />
+            <Route path="/admin/help" element={<NotFound />} /> {/* Added Help route */}
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />

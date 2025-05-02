@@ -1,10 +1,10 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   BarChart2, 
   ListChecks, 
   Users, 
-  Settings, 
   HelpCircle,
   LayoutDashboard,
   Vote,
@@ -46,10 +46,6 @@ const AdminSidebar = () => {
         <NavLink to="/admin/votes" className={navLinkClass}>
           <Vote className="h-5 w-5" />
           Votos
-        </NavLink>
-        <NavLink to="/admin/settings" className={navLinkClass}>
-          <Settings className="h-5 w-5" />
-          Configurações
         </NavLink>
       </nav>
 
