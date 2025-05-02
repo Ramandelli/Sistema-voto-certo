@@ -1,18 +1,35 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Users, ExternalLink } from 'lucide-react';
-import { Poll } from '@/lib/firebase';
+import { Poll, getCandidatesByPoll } from '@/lib/firebase';
 
 interface PollCardProps {
   poll: Poll;
   candidateCount?: number;
 }
 
-const PollCard: React.FC<PollCardProps> = ({ poll, candidateCount = 0 }) => {
+const PollCard: React.FC<PollCardProps> = ({ poll, candidateCount }) => {
+  const [candidates, setCandidates] = useState<number>(candidateCount || 0);
+  
+  useEffect(() => {
+    const loadCandidates = async () => {
+      if (typeof candidateCount === 'undefined' && poll.id) {
+        try {
+          const pollCandidates = await getCandidatesByPoll(poll.id);
+          setCandidates(pollCandidates.length);
+        } catch (error) {
+          console.error("Error loading candidates:", error);
+        }
+      }
+    };
+    
+    loadCandidates();
+  }, [poll.id, candidateCount]);
+
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -55,7 +72,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, candidateCount = 0 }) => {
           </div>
           <div className="flex items-center text-muted-foreground">
             <Users className="h-4 w-4 mr-2" />
-            <span>{candidateCount || poll.candidates?.length || 0} candidatos</span>
+            <span>{candidates} candidatos</span>
           </div>
         </div>
       </CardContent>

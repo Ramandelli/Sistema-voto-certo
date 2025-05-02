@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -66,16 +65,14 @@ const PollDetail = () => {
         const candidatesData = await getCandidatesByPoll(pollId);
         setCandidates(candidatesData);
         
-        // Check if user has voted
+        // Always fetch results for all users
+        const results = await getVoteResults(pollId);
+        setVoteResults(results);
+        
+        // Check if user has voted (only if logged in)
         if (currentUser) {
           const voted = await hasUserVoted(currentUser.uid, pollId);
           setHasVoted(voted);
-          
-          // If user has voted or poll is completed, fetch results
-          if (voted || pollData.status === 'completed') {
-            const results = await getVoteResults(pollId);
-            setVoteResults(results);
-          }
         }
       } catch (error) {
         console.error("Error fetching poll data:", error);
@@ -220,19 +217,19 @@ const PollDetail = () => {
         <div className="mb-8">
           <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-gradient">{poll.title}</h1>
+              <h1 className="text-3xl font-bold mb-2 text-gradient">{poll?.title}</h1>
               <p className="text-gray-600 max-w-3xl">
-                {poll.description}
+                {poll?.description}
               </p>
             </div>
-            <div>{getStatusBadge(poll.status)}</div>
+            <div>{poll && getStatusBadge(poll.status)}</div>
           </div>
           
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <div className="flex items-center">
               <CalendarDays className="h-4 w-4 mr-1" />
               <span>
-                {formatDate(poll.startDate)} até {formatDate(poll.endDate)}
+                {formatDate(poll?.startDate)} até {formatDate(poll?.endDate)}
               </span>
             </div>
             <div className="flex items-center">
@@ -244,12 +241,12 @@ const PollDetail = () => {
         
         <Separator className="my-6" />
         
-        {!isPollActive() && poll.status !== 'completed' && (
+        {!isPollActive() && poll?.status !== 'completed' && (
           <Alert className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Pesquisa não está ativa</AlertTitle>
             <AlertDescription>
-              {poll.status === 'scheduled' 
+              {poll?.status === 'scheduled' 
                 ? `Esta pesquisa está agendada para iniciar em ${formatDate(poll.startDate)}.`
                 : "Esta pesquisa não está disponível para votação no momento."}
             </AlertDescription>
@@ -266,8 +263,8 @@ const PollDetail = () => {
           </Alert>
         )}
         
-        {/* Results section (if user has voted or poll is completed) */}
-        {voteResults && (hasVoted || poll.status === 'completed') && (
+        {/* Results section (always shown) */}
+        {voteResults && (
           <div className="mb-8 bg-gray-50 p-6 rounded-lg">
             <div className="flex items-center space-x-2 mb-4">
               <BarChart className="h-5 w-5 text-primary" />

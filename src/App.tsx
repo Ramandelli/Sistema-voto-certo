@@ -23,7 +23,6 @@ import CreateEditPoll from "./pages/admin/CreateEditPoll";
 import ManageCandidates from "./pages/admin/ManageCandidates";
 import CreateEditCandidate from "./pages/admin/CreateEditCandidate";
 import ManageVotes from "./pages/admin/ManageVotes";
-import Settings from "./pages/admin/Settings";
 
 import NotFound from "./pages/NotFound";
 
@@ -54,7 +53,6 @@ const App = () => (
             <Route path="/admin/candidates" element={<ManageCandidates />} />
             <Route path="/admin/candidates/:candidateId" element={<CreateEditCandidate />} />
             <Route path="/admin/votes" element={<ManageVotes />} />
-            <Route path="/admin/settings" element={<Settings />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />

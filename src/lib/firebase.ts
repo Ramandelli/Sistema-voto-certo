@@ -127,6 +127,37 @@ export interface Poll {
   createdAt: Timestamp;
 }
 
+// Helper function to check and update poll status
+const checkAndUpdatePollStatus = async (poll: Poll): Promise<Poll> => {
+  const now = new Date();
+  const endDate = poll.endDate.toDate();
+  const startDate = poll.startDate.toDate();
+  
+  let updatedPoll = {...poll};
+  let needsUpdate = false;
+  
+  // If poll is active but end date has passed, mark as completed
+  if (poll.status === 'active' && now > endDate) {
+    updatedPoll.status = 'completed';
+    needsUpdate = true;
+  }
+  
+  // If poll is scheduled but start date has passed, mark as active
+  if (poll.status === 'scheduled' && now >= startDate && now <= endDate) {
+    updatedPoll.status = 'active';
+    needsUpdate = true;
+  }
+  
+  // Update the poll in the database if status changed
+  if (needsUpdate && poll.id) {
+    await updateDoc(doc(db, "polls", poll.id), {
+      status: updatedPoll.status
+    });
+  }
+  
+  return updatedPoll;
+};
+
 export const createPoll = async (pollData: Omit<Poll, 'id' | 'createdAt'>) => {
   try {
     const pollRef = await addDoc(collection(db, "polls"), {
@@ -181,7 +212,9 @@ export const getPoll = async (pollId: string) => {
   try {
     const pollDoc = await getDoc(doc(db, "polls", pollId));
     if (pollDoc.exists()) {
-      return { id: pollDoc.id, ...pollDoc.data() } as Poll;
+      const poll = { id: pollDoc.id, ...pollDoc.data() } as Poll;
+      // Check and update the status if necessary
+      return await checkAndUpdatePollStatus(poll);
     }
     return null;
   } catch (error) {
@@ -196,9 +229,12 @@ export const getAllPolls = async () => {
     const querySnapshot = await getDocs(pollsRef);
     const polls: Poll[] = [];
     
-    querySnapshot.forEach((doc) => {
-      polls.push({ id: doc.id, ...doc.data() } as Poll);
-    });
+    for (const doc of querySnapshot.docs) {
+      const poll = { id: doc.id, ...doc.data() } as Poll;
+      // Check and update each poll's status
+      const updatedPoll = await checkAndUpdatePollStatus(poll);
+      polls.push(updatedPoll);
+    }
     
     return polls;
   } catch (error) {
