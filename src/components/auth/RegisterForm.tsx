@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Lock, User } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const RegisterForm = () => {
   const [name, setName] = useState('');
@@ -15,11 +16,14 @@ const RegisterForm = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError(null);
+    
     if (!name || !email || !password || !confirmPassword) {
       toast({
         title: "Campos obrigatórios",
@@ -59,6 +63,7 @@ const RegisterForm = () => {
   };
 
   const handleGoogleRegister = async () => {
+    setAuthError(null);
     setIsLoading(true);
     try {
       await loginWithGoogle();
@@ -73,11 +78,7 @@ const RegisterForm = () => {
       // Mensagem de erro personalizada para o erro de domínio não autorizado
       if (error.code === 'auth/unauthorized-domain') {
         const currentDomain = window.location.hostname;
-        toast({
-          title: "Erro de configuração",
-          description: `O domínio atual "${currentDomain}" não está autorizado no Firebase. Adicione este domínio na configuração do Firebase Authentication.`,
-          variant: "destructive"
-        });
+        setAuthError(`O domínio atual "${currentDomain}" não está autorizado no Firebase. Verifique se este domínio exato foi adicionado nas configurações do Firebase Authentication (Console do Firebase > Authentication > Sign-in method > Domínios autorizados).`);
       } else {
         toast({
           title: "Erro ao cadastrar com Google",
@@ -99,6 +100,15 @@ const RegisterForm = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {authError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Erro de configuração Firebase</AlertTitle>
+            <AlertDescription>
+              {authError}
+            </AlertDescription>
+          </Alert>
+        )}
+      
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nome completo</Label>
