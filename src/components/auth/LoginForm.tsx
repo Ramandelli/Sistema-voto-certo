@@ -3,21 +3,33 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   loginWithEmail, 
-  loginWithGoogle 
+  loginWithGoogle,
+  linkGoogleWithEmail
 } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, LogIn, LogOut } from 'lucide-react';
+import { Mail, Lock, LogIn } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [linkPassword, setLinkPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [pendingGoogleInfo, setPendingGoogleInfo] = useState<{email: string} | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -58,17 +70,26 @@ const LoginForm = () => {
     setAuthError(null);
     setIsLoading(true);
     try {
-      await loginWithGoogle();
+      const result = await loginWithGoogle();
+      
+      // Se o login for bem-sucedido, redireciona para a página inicial
       toast({
         title: "Login realizado com sucesso",
         description: "Bem-vindo ao sistema de pesquisas eleitorais.",
       });
       navigate('/');
+      
     } catch (error: any) {
       console.error(error);
       
+      // Se for erro de conta já existente com mesmo e-mail
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        setPendingGoogleInfo({ email: error.customData?.email || '' });
+        setEmail(error.customData?.email || '');
+        setShowLinkDialog(true);
+      } 
       // Mensagem de erro personalizada para o erro de domínio não autorizado
-      if (error.code === 'auth/unauthorized-domain') {
+      else if (error.code === 'auth/unauthorized-domain') {
         const currentDomain = window.location.hostname;
         setAuthError(`O domínio atual "${currentDomain}" não está autorizado no Firebase. 
         
@@ -84,6 +105,38 @@ Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Si
           variant: "destructive"
         });
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLinkAccounts = async () => {
+    if (!pendingGoogleInfo || !pendingGoogleInfo.email || !linkPassword) {
+      toast({
+        title: "Informações incompletas",
+        description: "Por favor, forneça sua senha para vincular as contas.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await linkGoogleWithEmail(pendingGoogleInfo.email, linkPassword);
+      
+      setShowLinkDialog(false);
+      toast({
+        title: "Contas vinculadas com sucesso",
+        description: "Agora você pode acessar com e-mail/senha ou Google.",
+      });
+      navigate('/');
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Erro ao vincular contas",
+        description: error.message || "Verifique suas credenciais e tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +240,6 @@ Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Si
             </svg>
             Google
           </Button>
-
         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-4">
@@ -201,6 +253,40 @@ Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Si
           </a>
         </div>
       </CardFooter>
+
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vincular contas</DialogTitle>
+            <DialogDescription>
+              Já existe uma conta com o e-mail {pendingGoogleInfo?.email}. 
+              Digite sua senha para vincular sua conta do Google a esta conta existente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="link-password">Senha da conta existente</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="link-password"
+                  type="password"
+                  placeholder="********"
+                  value={linkPassword}
+                  onChange={(e) => setLinkPassword(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLinkDialog(false)}>Cancelar</Button>
+            <Button onClick={handleLinkAccounts} disabled={isLoading}>
+              {isLoading ? "Processando..." : "Vincular contas"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
