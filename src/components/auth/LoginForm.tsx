@@ -70,7 +70,13 @@ const LoginForm = () => {
       // Mensagem de erro personalizada para o erro de domínio não autorizado
       if (error.code === 'auth/unauthorized-domain') {
         const currentDomain = window.location.hostname;
-        setAuthError(`O domínio atual "${currentDomain}" não está autorizado no Firebase. Verifique se este domínio exato foi adicionado nas configurações do Firebase Authentication (Console do Firebase > Authentication > Sign-in method > Domínios autorizados).`);
+        setAuthError(`O domínio atual "${currentDomain}" não está autorizado no Firebase. 
+        
+ATENÇÃO: Verifique se você adicionou EXATAMENTE este domínio nas configurações do Firebase. 
+
+Se você adicionou "6660e90e-e497-4641-8006-de680469fd90.lovableproject.com" mas seu site está rodando em "6660e90e-e497-4641-8006-de680469fd90.lovableproject.app", o login não funcionará. 
+
+Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Sign-in method > Domínios autorizados.`);
       } else {
         toast({
           title: "Erro ao fazer login com Google",
