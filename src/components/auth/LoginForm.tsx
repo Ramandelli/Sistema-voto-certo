@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -33,6 +32,31 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Função para obter mensagem de erro amigável com base no código de erro
+  const getErrorMessage = (errorCode: string): string => {
+    switch (errorCode) {
+      case 'auth/invalid-credential':
+        return "Credenciais inválidas. Verifique seu e-mail e senha e tente novamente. Se você se cadastrou com Google, tente fazer login com Google.";
+      case 'auth/user-not-found':
+        return "Usuário não encontrado. Verifique seu e-mail ou cadastre-se.";
+      case 'auth/wrong-password':
+        return "Senha incorreta. Tente novamente ou clique em 'Esqueceu a senha?'.";
+      case 'auth/too-many-requests':
+        return "Muitas tentativas de login malsucedidas. Tente novamente mais tarde ou redefina sua senha.";
+      case 'auth/user-disabled':
+        return "Esta conta foi desativada. Entre em contato com o suporte para obter ajuda.";
+      case 'auth/unauthorized-domain':
+        const currentDomain = window.location.hostname;
+        return `O domínio atual "${currentDomain}" não está autorizado no Firebase. 
+        
+ATENÇÃO: Verifique se você adicionou EXATAMENTE este domínio nas configurações do Firebase. 
+
+Observe a diferença entre .app e .com no final do domínio.`;
+      default:
+        return "Erro ao fazer login. Por favor, tente novamente.";
+    }
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
@@ -56,9 +80,14 @@ const LoginForm = () => {
       navigate('/');
     } catch (error: any) {
       console.error(error);
+      
+      // Tratamento de erro melhorado
+      const errorMessage = getErrorMessage(error.code);
+      setAuthError(errorMessage);
+      
       toast({
         title: "Erro ao fazer login",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -88,20 +117,14 @@ const LoginForm = () => {
         setEmail(error.customData?.email || '');
         setShowLinkDialog(true);
       } 
-      // Mensagem de erro personalizada para o erro de domínio não autorizado
-      else if (error.code === 'auth/unauthorized-domain') {
-        const currentDomain = window.location.hostname;
-        setAuthError(`O domínio atual "${currentDomain}" não está autorizado no Firebase. 
+      // Mensagem de erro personalizada para qualquer erro
+      else {
+        const errorMessage = getErrorMessage(error.code);
+        setAuthError(errorMessage);
         
-ATENÇÃO: Verifique se você adicionou EXATAMENTE este domínio nas configurações do Firebase. 
-
-Se você adicionou "6660e90e-e497-4641-8006-de680469fd90.lovableproject.com" mas seu site está rodando em "6660e90e-e497-4641-8006-de680469fd90.lovableproject.app", o login não funcionará. 
-
-Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Sign-in method > Domínios autorizados.`);
-      } else {
         toast({
           title: "Erro ao fazer login com Google",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive"
         });
       }
@@ -132,9 +155,13 @@ Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Si
       navigate('/');
     } catch (error: any) {
       console.error(error);
+      
+      // Tratamento de erro melhorado para vinculação de contas
+      const errorMessage = getErrorMessage(error.code);
+      
       toast({
         title: "Erro ao vincular contas",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -153,8 +180,8 @@ Verifique cuidadosamente o domínio no Console do Firebase > Authentication > Si
       <CardContent>
         {authError && (
           <Alert variant="destructive" className="mb-6">
-            <AlertTitle>Erro de configuração Firebase</AlertTitle>
-            <AlertDescription>
+            <AlertTitle>Erro de autenticação</AlertTitle>
+            <AlertDescription className="whitespace-pre-line">
               {authError}
             </AlertDescription>
           </Alert>
