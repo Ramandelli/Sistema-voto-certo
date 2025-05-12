@@ -15,6 +15,7 @@ const CreateEditPoll = () => {
   const [loading, setLoading] = useState(pollId !== 'new');
   const [error, setError] = useState<string | null>(null);
   
+  // Fetch poll data if editing an existing poll
   useEffect(() => {
     if (pollId === 'new') {
       setLoading(false);

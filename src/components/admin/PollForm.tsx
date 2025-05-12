@@ -17,7 +17,6 @@ import {
   createPoll, 
   updatePoll, 
   Poll, 
-  getCandidate, 
   Candidate, 
   getAllCandidates 
 } from '@/lib/firebase';
@@ -64,32 +63,29 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(true);
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
-  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>(
+    existingPoll?.candidates || []
+  );
 
-  // Fix: Create the form with proper initial values
+  // Initialize form with default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: existingPoll?.title || '',
       description: existingPoll?.description || '',
       status: existingPoll?.status || 'scheduled',
-      selectedCandidates: [],
+      selectedCandidates: existingPoll?.candidates || [],
       startDate: existingPoll?.startDate || Timestamp.fromDate(new Date()),
       endDate: existingPoll?.endDate || Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
     }
   });
 
-  // Fix: Load candidates only once when the component mounts or when existingPoll changes
+  // Load candidates only once on mount
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
         const candidates = await getAllCandidates();
         setAllCandidates(candidates);
-        
-        if (existingPoll && existingPoll.candidates) {
-          setSelectedCandidateIds(existingPoll.candidates);
-          form.setValue("selectedCandidates", existingPoll.candidates);
-        }
       } catch (error) {
         console.error("Erro ao buscar candidatos:", error);
         toast({
@@ -104,22 +100,17 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
 
     fetchCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [existingPoll, toast]);
+  }, []);
 
+  // Handle candidate selection without causing a re-render loop
   const toggleCandidateSelection = (candidateId: string) => {
-    setSelectedCandidateIds(prev => {
-      const updatedSelection = prev.includes(candidateId)
-        ? prev.filter(id => id !== candidateId)
-        : [...prev, candidateId];
-      
-      // Update form value but don't trigger another re-render cascade
-      form.setValue("selectedCandidates", updatedSelection, { 
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true
-      });
-      
-      return updatedSelection;
+    const newSelection = selectedCandidateIds.includes(candidateId)
+      ? selectedCandidateIds.filter(id => id !== candidateId)
+      : [...selectedCandidateIds, candidateId];
+    
+    setSelectedCandidateIds(newSelection);
+    form.setValue("selectedCandidates", newSelection, { 
+      shouldValidate: true 
     });
   };
 
@@ -299,7 +290,7 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select 
-                value={form.watch("status")}
+                defaultValue={form.watch("status")}
                 onValueChange={(value: any) => handleStatusChange(value)}
               >
                 <SelectTrigger>
@@ -331,22 +322,29 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
                     </TableHeader>
                     <TableBody>
                       {allCandidates.map((candidate) => (
-                        <TableRow key={candidate.id} className="cursor-pointer hover:bg-muted" onClick={() => candidate.id && toggleCandidateSelection(candidate.id)}>
+                        <TableRow 
+                          key={candidate.id} 
+                          className="cursor-pointer hover:bg-muted"
+                        >
                           <TableCell>
                             <Checkbox
                               checked={candidate.id ? selectedCandidateIds.includes(candidate.id) : false}
                               onCheckedChange={() => candidate.id && toggleCandidateSelection(candidate.id)}
+                              onClick={(e) => e.stopPropagation()}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell onClick={() => candidate.id && toggleCandidateSelection(candidate.id)}>
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-10 w-10">
-                                <AvatarImage src={candidate.photoURL} />
+                                <AvatarImage src={candidate.photoURL} alt={candidate.name} />
                                 <AvatarFallback>{candidate.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div>
                                 <div className="font-medium">{candidate.name}</div>
-                                <div className="text-sm text-muted-foreground line-clamp-1">{candidate.biography}</div>
+                                <div className="text-sm text-muted-foreground line-clamp-1">
+                                  {candidate.biography.substring(0, 100)}
+                                  {candidate.biography.length > 100 ? '...' : ''}
+                                </div>
                               </div>
                             </div>
                           </TableCell>
