@@ -18,17 +18,21 @@ const CreateEditPoll = () => {
   // Fetch poll data if editing an existing poll
   useEffect(() => {
     if (pollId === 'new') {
+      console.log("Creating a new poll");
       setLoading(false);
       return;
     }
     
     if (pollId) {
       const fetchPoll = async () => {
+        console.log(`Fetching poll data for ID: ${pollId}`);
         try {
           const pollData = await getPoll(pollId);
           if (!pollData) {
+            console.log("Poll not found");
             setError('Pesquisa não encontrada');
           } else {
+            console.log("Poll data retrieved:", pollData);
             setPoll(pollData);
           }
         } catch (error) {

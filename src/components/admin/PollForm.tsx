@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2, Check, X } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
@@ -63,10 +63,9 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(true);
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
-  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>(
-    existingPoll?.candidates || []
-  );
-
+  
+  console.log("PollForm rendered with existingPoll:", existingPoll);
+  
   // Initialize form with default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,12 +78,14 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
       endDate: existingPoll?.endDate || Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
     }
   });
-
+  
   // Load candidates only once on mount
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
+        console.log("Fetching all candidates");
         const candidates = await getAllCandidates();
+        console.log("Fetched candidates:", candidates);
         setAllCandidates(candidates);
       } catch (error) {
         console.error("Erro ao buscar candidatos:", error);
@@ -101,39 +102,33 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
     fetchCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Handle candidate selection without causing a re-render loop
+  
+  // Handle candidate selection
   const toggleCandidateSelection = (candidateId: string) => {
-    const newSelection = selectedCandidateIds.includes(candidateId)
-      ? selectedCandidateIds.filter(id => id !== candidateId)
-      : [...selectedCandidateIds, candidateId];
+    const currentSelectedCandidates = form.getValues("selectedCandidates");
     
-    setSelectedCandidateIds(newSelection);
-    form.setValue("selectedCandidates", newSelection, { 
-      shouldValidate: true 
-    });
+    const newSelection = currentSelectedCandidates.includes(candidateId)
+      ? currentSelectedCandidates.filter(id => id !== candidateId)
+      : [...currentSelectedCandidates, candidateId];
+    
+    console.log(`Toggling candidate ${candidateId}, new selection:`, newSelection);
+    form.setValue("selectedCandidates", newSelection, { shouldValidate: true });
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
     if (date) {
-      form.setValue("startDate", Timestamp.fromDate(date), { 
-        shouldValidate: true 
-      });
+      form.setValue("startDate", Timestamp.fromDate(date), { shouldValidate: true });
     }
   };
 
   const handleEndDateChange = (date: Date | undefined) => {
     if (date) {
-      form.setValue("endDate", Timestamp.fromDate(date), { 
-        shouldValidate: true 
-      });
+      form.setValue("endDate", Timestamp.fromDate(date), { shouldValidate: true });
     }
   };
 
   const handleStatusChange = (value: 'active' | 'scheduled' | 'completed') => {
-    form.setValue("status", value, {
-      shouldValidate: true
-    });
+    form.setValue("status", value, { shouldValidate: true });
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -149,14 +144,18 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
     setLoading(true);
     
     try {
+      console.log("Form submitted with data:", data);
+      
       const pollData = {
         title: data.title,
         description: data.description,
         status: data.status,
         startDate: data.startDate,
         endDate: data.endDate,
-        candidates: selectedCandidateIds
+        candidates: data.selectedCandidates
       };
+      
+      console.log("Preparing poll data:", pollData);
 
       if (existingPoll?.id) {
         await updatePoll(existingPoll.id, pollData);
@@ -290,7 +289,7 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select 
-                defaultValue={form.watch("status")}
+                value={form.watch("status")}
                 onValueChange={(value: any) => handleStatusChange(value)}
               >
                 <SelectTrigger>
@@ -304,71 +303,83 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
               </Select>
             </div>
             
-            <div className="space-y-2 pt-4">
-              <Label className="text-base">Selecione os candidatos para esta pesquisa</Label>
-              {loadingCandidates ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-muted-foreground">Carregando candidatos...</span>
-                </div>
-              ) : allCandidates.length > 0 ? (
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">Selecionar</TableHead>
-                        <TableHead>Candidato</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {allCandidates.map((candidate) => (
-                        <TableRow 
-                          key={candidate.id} 
-                          className="cursor-pointer hover:bg-muted"
-                        >
-                          <TableCell>
-                            <Checkbox
-                              checked={candidate.id ? selectedCandidateIds.includes(candidate.id) : false}
-                              onCheckedChange={() => candidate.id && toggleCandidateSelection(candidate.id)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </TableCell>
-                          <TableCell onClick={() => candidate.id && toggleCandidateSelection(candidate.id)}>
-                            <div className="flex items-center space-x-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={candidate.photoURL} alt={candidate.name} />
-                                <AvatarFallback>{candidate.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{candidate.name}</div>
-                                <div className="text-sm text-muted-foreground line-clamp-1">
-                                  {candidate.biography.substring(0, 100)}
-                                  {candidate.biography.length > 100 ? '...' : ''}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center p-4 border rounded-md">
-                  <p>Nenhum candidato cadastrado. <a href="/admin/candidates/new" className="text-primary hover:underline">Cadastre candidatos</a> para adicioná-los à pesquisa.</p>
-                </div>
+            <FormField
+              control={form.control}
+              name="selectedCandidates"
+              render={() => (
+                <FormItem>
+                  <FormLabel className="text-base">Selecione os candidatos para esta pesquisa</FormLabel>
+                  <FormControl>
+                    <>
+                      {loadingCandidates ? (
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          <span className="ml-2 text-muted-foreground">Carregando candidatos...</span>
+                        </div>
+                      ) : allCandidates.length > 0 ? (
+                        <div className="border rounded-md">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-12">Selecionar</TableHead>
+                                <TableHead>Candidato</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {allCandidates.map((candidate) => {
+                                const isSelected = candidate.id ? 
+                                  form.watch("selectedCandidates").includes(candidate.id) : false;
+                                  
+                                return (
+                                  <TableRow 
+                                    key={candidate.id} 
+                                    className="cursor-pointer hover:bg-muted"
+                                    onClick={() => candidate.id && toggleCandidateSelection(candidate.id)}
+                                  >
+                                    <TableCell className="w-12">
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={() => candidate.id && toggleCandidateSelection(candidate.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center space-x-3">
+                                        <Avatar className="h-10 w-10">
+                                          <AvatarImage src={candidate.photoURL} alt={candidate.name} />
+                                          <AvatarFallback>{candidate.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                          <div className="font-medium">{candidate.name}</div>
+                                          <div className="text-sm text-muted-foreground line-clamp-1">
+                                            {candidate.biography.substring(0, 100)}
+                                            {candidate.biography.length > 100 ? '...' : ''}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ) : (
+                        <div className="text-center p-4 border rounded-md">
+                          <p>Nenhum candidato cadastrado. <a href="/admin/candidates/new" className="text-primary hover:underline">Cadastre candidatos</a> para adicioná-los à pesquisa.</p>
+                        </div>
+                      )}
+                    </>
+                  </FormControl>
+                  {form.watch("selectedCandidates").length > 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {form.watch("selectedCandidates").length} candidato(s) selecionado(s)
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
               )}
-              {selectedCandidateIds.length > 0 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  {selectedCandidateIds.length} candidato(s) selecionado(s)
-                </p>
-              )}
-              {form.formState.errors.selectedCandidates && (
-                <p className="text-sm text-destructive mt-2">
-                  {form.formState.errors.selectedCandidates.message}
-                </p>
-              )}
-            </div>
+            />
           </CardContent>
           
           <CardFooter>

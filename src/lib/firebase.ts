@@ -199,10 +199,12 @@ const checkAndUpdatePollStatus = async (poll: Poll): Promise<Poll> => {
 
 export const createPoll = async (pollData: Omit<Poll, 'id' | 'createdAt'>) => {
   try {
+    console.log("Creating poll with data:", pollData);
     const pollRef = await addDoc(collection(db, "polls"), {
       ...pollData,
       createdAt: serverTimestamp()
     });
+    console.log("Poll created with ID:", pollRef.id);
     return pollRef.id;
   } catch (error) {
     console.error("Error creating poll:", error);
@@ -212,9 +214,11 @@ export const createPoll = async (pollData: Omit<Poll, 'id' | 'createdAt'>) => {
 
 export const updatePoll = async (pollId: string, pollData: Partial<Poll>) => {
   try {
+    console.log(`Updating poll ${pollId} with data:`, pollData);
     await updateDoc(doc(db, "polls", pollId), {
       ...pollData
     });
+    console.log("Poll updated successfully");
     return true;
   } catch (error) {
     console.error("Error updating poll:", error);
@@ -249,12 +253,15 @@ export const getActivePoll = async () => {
 
 export const getPoll = async (pollId: string) => {
   try {
+    console.log(`Getting poll with ID: ${pollId}`);
     const pollDoc = await getDoc(doc(db, "polls", pollId));
     if (pollDoc.exists()) {
       const poll = { id: pollDoc.id, ...pollDoc.data() } as Poll;
+      console.log("Poll data retrieved:", poll);
       // Check and update the status if necessary
       return await checkAndUpdatePollStatus(poll);
     }
+    console.log(`Poll with ID ${pollId} not found`);
     return null;
   } catch (error) {
     console.error("Error getting poll:", error);
@@ -339,15 +346,38 @@ export const getCandidate = async (candidateId: string) => {
 
 export const getCandidatesByPoll = async (pollId: string) => {
   try {
-    const candidatesRef = collection(db, "candidates");
-    const q = query(candidatesRef, where("pollId", "==", pollId));
-    const querySnapshot = await getDocs(q);
+    console.log(`Getting candidates for poll ID: ${pollId}`);
+    
+    // First get the poll to access the candidate IDs
+    const pollDoc = await getDoc(doc(db, "polls", pollId));
+    
+    if (!pollDoc.exists()) {
+      console.log(`Poll with ID ${pollId} not found`);
+      return [];
+    }
+    
+    const pollData = pollDoc.data() as Poll;
+    const candidateIds = pollData.candidates || [];
+    
+    console.log(`Poll has ${candidateIds.length} candidate IDs:`, candidateIds);
+    
+    if (candidateIds.length === 0) {
+      return [];
+    }
+    
+    // Get all candidates that match the IDs in the poll
     const candidates: Candidate[] = [];
     
-    querySnapshot.forEach((doc) => {
-      candidates.push({ id: doc.id, ...doc.data() } as Candidate);
-    });
+    for (const candidateId of candidateIds) {
+      const candidateDoc = await getDoc(doc(db, "candidates", candidateId));
+      if (candidateDoc.exists()) {
+        candidates.push({ id: candidateDoc.id, ...candidateDoc.data() } as Candidate);
+      } else {
+        console.log(`Candidate with ID ${candidateId} not found`);
+      }
+    }
     
+    console.log(`Found ${candidates.length} candidates for poll`);
     return candidates;
   } catch (error) {
     console.error("Error getting candidates by poll:", error);

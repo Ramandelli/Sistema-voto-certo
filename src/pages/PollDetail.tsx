@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -52,6 +53,7 @@ const PollDetail = () => {
     
     const fetchPollData = async () => {
       try {
+        console.log(`Fetching poll data for ID: ${pollId}`);
         const pollData = await getPoll(pollId);
         if (!pollData) {
           setError("Pesquisa não encontrada");
@@ -59,11 +61,19 @@ const PollDetail = () => {
           return;
         }
         
+        console.log("Poll data retrieved:", pollData);
         setPoll(pollData);
         
         // Fetch candidates
-        const candidatesData = await getCandidatesByPoll(pollId);
-        setCandidates(candidatesData);
+        console.log(`Fetching candidates for poll ID: ${pollId}`);
+        if (pollData.candidates && pollData.candidates.length > 0) {
+          const candidatesData = await getCandidatesByPoll(pollId);
+          console.log("Candidates retrieved:", candidatesData);
+          setCandidates(candidatesData);
+        } else {
+          console.log("No candidates in poll data:", pollData.candidates);
+          setCandidates([]);
+        }
         
         // Always fetch results for all users
         const results = await getVoteResults(pollId);
