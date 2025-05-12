@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -352,6 +351,23 @@ export const getCandidatesByPoll = async (pollId: string) => {
     return candidates;
   } catch (error) {
     console.error("Error getting candidates by poll:", error);
+    throw error;
+  }
+};
+
+export const getAllCandidates = async () => {
+  try {
+    const candidatesRef = collection(db, "candidates");
+    const querySnapshot = await getDocs(candidatesRef);
+    const candidates: Candidate[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      candidates.push({ id: doc.id, ...doc.data() } as Candidate);
+    });
+    
+    return candidates;
+  } catch (error) {
+    console.error("Error getting all candidates:", error);
     throw error;
   }
 };
