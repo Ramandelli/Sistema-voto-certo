@@ -66,18 +66,20 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
 
+  // Fix: Create the form with proper initial values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: existingPoll?.title || '',
       description: existingPoll?.description || '',
       status: existingPoll?.status || 'scheduled',
-      selectedCandidates: existingPoll?.candidates || [],
+      selectedCandidates: [],
       startDate: existingPoll?.startDate || Timestamp.fromDate(new Date()),
       endDate: existingPoll?.endDate || Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
     }
   });
 
+  // Fix: Load candidates only once when the component mounts or when existingPoll changes
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
@@ -86,6 +88,7 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
         
         if (existingPoll && existingPoll.candidates) {
           setSelectedCandidateIds(existingPoll.candidates);
+          form.setValue("selectedCandidates", existingPoll.candidates);
         }
       } catch (error) {
         console.error("Erro ao buscar candidatos:", error);
@@ -100,32 +103,46 @@ const PollForm: React.FC<PollFormProps> = ({ existingPoll, onSuccess }) => {
     };
 
     fetchCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingPoll, toast]);
 
   const toggleCandidateSelection = (candidateId: string) => {
     setSelectedCandidateIds(prev => {
-      if (prev.includes(candidateId)) {
-        return prev.filter(id => id !== candidateId);
-      } else {
-        return [...prev, candidateId];
-      }
+      const updatedSelection = prev.includes(candidateId)
+        ? prev.filter(id => id !== candidateId)
+        : [...prev, candidateId];
+      
+      // Update form value but don't trigger another re-render cascade
+      form.setValue("selectedCandidates", updatedSelection, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+      
+      return updatedSelection;
     });
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
     if (date) {
-      form.setValue("startDate", Timestamp.fromDate(date));
+      form.setValue("startDate", Timestamp.fromDate(date), { 
+        shouldValidate: true 
+      });
     }
   };
 
   const handleEndDateChange = (date: Date | undefined) => {
     if (date) {
-      form.setValue("endDate", Timestamp.fromDate(date));
+      form.setValue("endDate", Timestamp.fromDate(date), { 
+        shouldValidate: true 
+      });
     }
   };
 
   const handleStatusChange = (value: 'active' | 'scheduled' | 'completed') => {
-    form.setValue("status", value);
+    form.setValue("status", value, {
+      shouldValidate: true
+    });
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
